@@ -235,6 +235,95 @@ ggplot(data = combinedData3, aes(x = Year, y = `Total Fertility Rate (live birth
   theme_minimal()
 ```
 
+#### Diagram 3 (Alex Lu) #####
+
+```{r}
+
+regions <- c("Africa", "World", "Asia", "Latin America and the Caribbean", "Northern America", "Europe")
+combined_data <- data_estimates %>%
+  filter(Year <= 2024) %>%
+  bind_rows(data_medium_variant %>% filter(Year > 2024)) %>%
+  filter(`Region, subregion, country or area *` %in% regions) %>%
+  select(`Region, subregion, country or area *`, Year, `Total Fertility Rate (live births per woman)`)
+
+combined_data <- combined_data %>%
+  rename(
+    Region = `Region, subregion, country or area *`,
+    FertilityRate = `Total Fertility Rate (live births per woman)`
+  )
+
+
+combined_data <- combined_data %>%
+  filter(!is.na(Year) & !is.na(FertilityRate))
+
+ggplot(combined_data, aes(x = Year, y = FertilityRate, color = Region)) +
+  geom_line(size = 1) +
+  scale_x_continuous(
+    limits = c(1950, 2100),
+    breaks = c(1950, 1980, 2000, 2020, 2040, 2060, 2080, 2100)
+  ) +
+  scale_y_continuous(limits = c(0, 7), breaks = seq(0, 6, 1)) +
+  labs(
+    title = "Fertility rate: children per woman, 1950 to 2100",
+    x = "",
+    y = "",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),
+    axis.text = element_text(size = 8),
+    axis.title = element_text(size = 9),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 8)
+  )
+```
+
+####### Diagram 4 (Alex Lu) ########
+```{r}
+countries <- c("China", "India")
+combined_data <- data_estimates %>%
+  filter(Year <= 2024) %>%
+  bind_rows(data_medium_variant %>% filter(Year > 2024)) %>%
+  filter(`Region, subregion, country or area *` %in% countries) %>%
+  select(`Region, subregion, country or area *`, Year, `Total Population, as of 1 July (thousands)`)
+
+combined_data <- combined_data %>%
+  rename(
+    Country = `Region, subregion, country or area *`,
+    Population = `Total Population, as of 1 July (thousands)`
+  )
+
+combined_data <- combined_data %>%
+  mutate(Population = Population * 1000)  
+
+ggplot(combined_data, aes(x = Year, y = Population, color = Country)) +
+  geom_line(size = 1) +
+  scale_x_continuous(
+    limits = c(1950, 2100),
+    breaks = c(1950, 1980, 2000, 2020, 2020, 2040, 2060, 2080, 2100)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1800000000),
+    breaks = c(0, 200000000, 400000000, 600000000, 800000000, 1000000000, 1200000000, 1400000000, 1600000000),
+    labels = c("0", "200 million", "400 million", "600 million", "800 million", "1 billion", "1.2 billion", "1.4 billion", "1.6 billion")
+  ) +
+  labs(
+    title = "Population of China and India, 1950 to 2100",
+    x = "",
+    y = "",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),
+    axis.text = element_text(size = 8),
+    axis.title = element_text(size = 9),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 8)
+  )
+```
+
 ####### Diagram 4 ########
 
 ```{r}
@@ -475,6 +564,140 @@ data_eda |> group_by(Region) |> ggplot(aes(x = Year, y = `Population Sex Ratio (
 ```
 
 The graph above highlights a striking trend in Russia's sex ratio, which rises significantly from 87 males per 100 females to 95 males per 100 females over the observed period. In contrast, the sex ratios for the other countries remain relatively stable, fluctuating within a narrow range of 100 males per 100 females to 105 males per 100 females. This notable increase in Russia's sex ratio suggests a shift in its demographic composition, while the stability in other countries indicates balanced gender distributions over time.
+
+####### Requirement 4 (Alex Lu) ##########
+
+```{r}
+india_data <- data_estimates %>%
+  filter(`Region, subregion, country or area *` == "India") %>%
+  select(Year, 
+         `Total Fertility Rate (live births per woman)`, 
+         `Life Expectancy at Birth, both sexes (years)`, 
+         `Population Growth Rate (percentage)`) %>%
+  rename(
+    FertilityRate = `Total Fertility Rate (live births per woman)`,
+    LifeExpectancy = `Life Expectancy at Birth, both sexes (years)`,
+    PopulationGrowthRate = `Population Growth Rate (percentage)`
+  ) %>%
+  filter(!is.na(FertilityRate) & !is.na(LifeExpectancy) & !is.na(PopulationGrowthRate))
+
+cor_data <- india_data %>%
+  select(-Year) %>%
+  cor(use = "complete.obs") %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "Variable1") %>%
+  gather(Variable2, Correlation, -Variable1)
+
+ggplot(cor_data, aes(x = Variable1, y = Variable2, fill = Correlation)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, 
+                       name = "Correlation") +
+  labs(
+    title = "Correlation Heatmap: India Life Expectancy, Fertility, and Population Growth",
+    x = "",
+    y = ""
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    axis.text.y = element_text(size = 10),
+    plot.title = element_text(hjust = 0.5, size = 9, face = "bold")
+  )
+
+```
+Interpretation: 
+The correlation between life expectancy and fertility rate appears to be strongly negative, which aligns with many demographic trends in developing countries like India, where improved life expectancy often coincides with improved health, education, and access to family planning which lower fertility rates. There is a strong correlation between population growth and fertility rate, which is logical since more births means an increase in population. The correlation between life expectancy and pop growth rate is interestingly weakly positive(purple), which seems to suggest that life expectancy could lead to increase in population growth, but is not always the case. Other factors like decreasing fertility rate may balance the population growth over time like in developed countries such as Japan. 
+
+
+```{r}
+countries <- c("United States of America", "Democratic Republic of the Congo", "Japan")
+
+combined_growth_data <- data_estimates %>%
+  filter(Year <= 2023) %>%
+  bind_rows(data_medium_variant %>% filter(Year > 2023)) %>%
+  filter(`Region, subregion, country or area *` %in% countries) %>%
+  select(`Region, subregion, country or area *`, Year, `Population Growth Rate (percentage)`) %>%
+  rename(
+    Country = `Region, subregion, country or area *`,
+    GrowthRate = `Population Growth Rate (percentage)`
+  ) %>%
+  filter(!is.na(GrowthRate))
+
+ggplot(combined_growth_data, aes(x = Year, y = GrowthRate, color = Country)) +
+  geom_line(size = 1.2) +
+  scale_x_continuous(
+    breaks = c(1950, 1980, 2000, 2020, 2040, 2060, 2080, 2100), 
+    limits = c(1950, 2100)
+    ) +
+  scale_y_continuous(limits = c(-1, 6), breaks = seq(-1, 6, 1)) +
+  labs(
+    title = "Population Growth Rate (1950-2100)",
+    subtitle = "Comparing the USA, DR Congo, and Japan",
+    x = "Year",
+    y = "Population Growth Rate (%)",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 7, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 10),
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 8)
+  )
+
+```
+Interpretation:
+The DRC displays the highest growth rates, peaking in the late 20th century due to high fertility rates, though it gradually declines over time. Japan's growth rate steadily decreases, turning negative in recent decades, reflecting an aging population, low fertility, and population decline. Meanwhile, the United States maintains a relatively stable growth rate, slowly declining but remaining positive, driven by moderate fertility and immigration. These trends highlight the DRC's rapid population expansion due to being a developing country, Japan's demographic challenges, and the USA's balanced growth.
+
+```{r}
+countries <- c("United States of America", "Germany", "Democratic Republic of the Congo", "Japan", "India", "Nigeria")
+
+age_data <- data_estimates %>%
+  filter(Year <= 2023) %>%
+  bind_rows(data_medium_variant %>% filter(Year > 2023)) %>%
+  filter(`Region, subregion, country or area *` %in% countries) %>%
+  select(`Region, subregion, country or area *`, Year, `Median Age, as of 1 July (years)`) %>%
+  rename(
+    Country = `Region, subregion, country or area *`,
+    MedianAge = `Median Age, as of 1 July (years)`
+  ) %>%
+  filter(!is.na(MedianAge))
+
+ggplot(age_data, aes(x = Year, y = MedianAge, color = Country)) +
+  geom_line(size = 1.2) +
+  scale_x_continuous(
+    breaks = c(1950, 1980, 2000, 2020, 2040, 2060, 2080, 2100),
+    limits = c(1950, 2100)
+  ) +
+  scale_y_continuous(
+    limits = c(10, 60), 
+    breaks = seq(10, 60, 10)
+  ) +
+  labs(
+    title = "Median Age Over Time (1950-2100)",
+    subtitle = "Comparison of Developed and Developing Countries",
+    x = "Year",
+    y = "Median Age (Years)",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 8),
+    axis.text = element_text(size = 8),
+    axis.title = element_text(size = 10),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 8)
+  )
+```
+Interpretation:
+The graph shows the trends in median age from 1950 to 2100 for six countries, highlighting differences between developed (United States, Germany, Japan) and developing nations (Democratic Republic of the Congo, India, Nigeria). Developed countries generally exhibit higher median ages throughout, reflecting aging populations due to lower fertility rates and higher life expectancy. Conversely, developing nations start with significantly lower median ages, indicative of younger populations with higher birth rates, but experience gradual increases as demographic transitions occur.
+
+The small dip in the United States' median age around 1970 corresponds to the Baby Boom, a post-World War II event, marked by a significant rise in birth rates. This influx of younger individuals temporarily reduced the median age during this period. Over time, as the Baby Boomers aged and birth rates declined, the median age began rising again. 
+
+
 
 **5. Requirement-5 (2 pt)**
 Having developed a strong understanding of your data, you'll now create a machine learning (ML) model to predict a specific metric. This involves selecting the most relevant variables from your dataset.
